@@ -1,0 +1,14 @@
+{
+  "tts_prompt": {
+    "description": "TTS触发提示词",
+    "type": "text",
+    "hint": "在此修改TTS触发提示词，可使用 {available_emotions} 占位符动态注入可用情绪列表。若使用的分段正则为标点符号(，。？！等)，且需要转语音的文本中带有这些符号，可能会导致识别/转换失败",
+    "default": "当你想要发送语音时，使用<tts:emotion></tts>标签包裹需要转语音的文本，语音可放在句中的任意位置。你可以根据当前情绪选择合适的情绪标签，让语音更有表现力。\n可选的emotion列表：{available_emotions}\n示例一：对猫来说想念是很平常的事<tts:tender>人类只有分开的时候才会想念</tts> \n示例二：<tts:happy>谢谢你的祝福</tts>"
+  },
+  "notify_on_failure": {
+    "description": "TTS失败时通知",
+    "type": "bool",
+    "default": false,
+    "hint": "若开启，当TTS生成失败时，将在回复中包含错误提示"
+  }
+}

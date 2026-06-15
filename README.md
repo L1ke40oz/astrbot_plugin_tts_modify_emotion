@@ -1,14 +1,96 @@
-# astrbot-plugin-helloworld
+# TTS_modify 插件说明
 
-AstrBot 插件模板 / A template plugin for AstrBot plugin feature
+启用插件后，可对特定文本进行 TTS 请求。实现 LLM 根据对话情绪自主调用 TTS，支持基础语音转换与情绪参数定制。  
+仅对被 `<tts></tts>` 或带有情绪的 `<tts:emotion></tts>` 标记的文本进行 TTS 请求。 
 
-> [!NOTE]
-> This repo is just a template of [AstrBot](https://github.com/AstrBotDevs/AstrBot) Plugin.
-> 
-> [AstrBot](https://github.com/AstrBotDevs/AstrBot) is an agentic assistant for both personal and group conversations. It can be deployed across dozens of mainstream instant messaging platforms, including QQ, Telegram, Feishu, DingTalk, Slack, LINE, Discord, Matrix, etc. In addition, it provides a reliable and extensible conversational AI infrastructure for individuals, developers, and teams. Whether you need a personal AI companion, an intelligent customer support agent, an automation assistant, or an enterprise knowledge base, AstrBot enables you to quickly build AI applications directly within your existing messaging workflows.
+## 安装插件
 
-# Supports
+打开 Astrbot 模板——插件——Astrbot 插件——“+”号按钮——从链接安装
+复制仓库地址并填入
 
-- [AstrBot Repo](https://github.com/AstrBotDevs/AstrBot)
-- [AstrBot Plugin Development Docs (Chinese)](https://docs.astrbot.app/dev/star/plugin-new.html)
-- [AstrBot Plugin Development Docs (English)](https://docs.astrbot.app/en/dev/star/plugin-new.html)
+<img src="https://github.com/user-attachments/assets/f4659f0a-5e86-476e-8751-8a6f5ef570ee" alt="插件安装" width="300">
+
+
+
+## 核心配置项
+
+* **tts_prompt**: 在发送 LLM 请求前，插件会将此触发提示词动态注入到 System Prompt 末尾。提示词可自行修改。
+    * *⚠️注意： `<tts></tts>` 标签是必要的，即使要修改提示词，也不可省略；如果想完全停用语音，需要在配置文件中将 tts 触发概率调为 0。*
+* **available_emotions**: 允许 LLM 使用的情绪标签列表（以逗号分隔，如 `happy,sad,angry,fearful,surprised,tender,sexy,neutral`）。留空则代表允许所有。
+* **notify_on_failure**: 控制 TTS 生成失败时是否在回复中显示 `[TTS失败]` 提示（默认关闭，静默降级为输出纯文本）。
+
+<img src="https://github.com/user-attachments/assets/a9a96895-7518-49b1-bfc2-8dbda4392d30" alt="tts工作示例" width="300">
+
+
+
+## 情绪参数配置 (v1.4.0)
+
+插件支持通过根目录下的 `emotion_params.json` 文件对外置情绪参数进行精细化控制。插件初始化时会自动生成该默认文件。
+
+### 支持的标签语法
+LLM 可以输出带有情绪的标记，应用对应的语音参数：
+* `<tts:happy>今天很开心</tts>`
+* `<tts:tender>慢慢来</tts>`
+
+### 自定义与新增情绪
+通过编辑 `emotion_params.json` 来微调现有情绪的速度、音调和音量，或者添加全新的情绪。最终的语音参数由基准值 (baseline) 与情绪增量乘以强度 (strength) 动态计算得出。
+
+**文件配置示例：**
+```json
+{
+  "baseline": {
+    "speed": 1.0,
+    "pitch": 0,
+    "vol": 1.0
+  },
+  "strength": 0.7,
+  "emotions": {
+    "happy": {
+      "speed": 0.08,
+      "pitch": 0.3,
+      "vol": 0.1,
+      "pass_to_provider": true,
+      "description": "开心"
+    },
+    "calm": {
+      "speed": -0.08,
+      "pitch": -0.1,
+      "vol": -0.05,
+      "pass_to_provider": false,
+      "description": "平静"
+    }
+  }
+}
+```
+
+* **`pass_to_provider`**: 控制是否向底层的 TTS Provider 直接传递该情绪名。仅建议对 Provider 原生支持的情绪（如 happy, sad 等）开启 `true`；对于自定义新增的情绪（如 calm），建议设为 `false`，插件将仅通过调整音调和语速来模拟情绪，防止请求出错。
+* **⚠️修改生效**: 每次修改 `emotion_params.json` 或 `available_emotions` 后，**必须重载插件**才能使新参数生效。
+
+---
+
+## 文本清洗与使用限制
+
+### 1. 容错清洗机制
+为了提供更稳定的语音输出，插件内置了容错规则：
+* **非法字符清洗**：当 LLM 在标签内部混入 `$` 或换行符（`\n`, `\r`）时，插件会自动将其转化为逗号制造自然停顿，防止 TTS 合成失败。
+* **异常标签兜底**：遇到未闭合标签或孤立的闭合标签（如 `你好</tts>呀`）时，插件会自动剥离残缺代码，确保绝不向用户暴露 `<tts>` 原始标签。
+* **未知情绪处理**：如果 LLM 使用了不在 `available_emotions` 列表中的情绪，插件会自动静默回退为默认参数处理。
+
+### 2. 标签编写规范
+* **不支持嵌套**：如 `<tts>外层<tts>内层</tts></tts>` 会导致解析错误。
+* **位置灵活**：支持在文本的任意位置插入标签，支持在单条回复中并发处理多个标签。
+
+### 3. 安全与资源管理
+* **文件路径验证**：插件会对 TTS 生成的音频文件路径进行严格安全校验，仅允许 AstrBot 数据目录下的文件。
+* **临时文件托管**：若启用了文件服务（File Service），生成的音频 URL 对应的临时文件统一由 AstrBot 的 `file_token_service` 管理。
+
+### 4. 会话级权限控制
+* **关闭 TTS**：在 AstrBot「会话管理 → 自定义规则」里对某会话关闭 TTS 后，本插件**不再生成语音**，`<tts>` 标签会被彻底剥离为纯文本，且不再注入 TTS 提示词。（已修复旧版本绕过会话控制的 Bug）。
+* **禁用插件**：在自定义规则里禁用本插件后，本插件在该会话完全停用（既不注入提示词，也不处理标签）。
+* *注：若所用框架版本不支持会话管理能力，则上述判断自动失效，行为退回全局模式。*
+
+
+
+😸 经测试，无论 `<tts></tts>` 标签前后是否带有分段正则表达式，都不会影响 TTS 请求，且已对换行与特殊字符做了清洗，可放心食用！  
+
+原仓库地址（旧版本需修改程序）：[AstrBot_mod](https://github.com/L1ke40oz/AstrBot_mod)

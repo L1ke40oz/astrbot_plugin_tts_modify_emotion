@@ -1,0 +1,66 @@
+{
+  "baseline": {
+    "speed": 1.0,
+    "pitch": 0,
+    "vol": 1.0
+  },
+  "strength": 0.7,
+  "emotions": {
+    "happy": {
+      "speed": 0.12,
+      "pitch": 0.5,
+      "vol": 0.15,
+      "pass_to_provider": true,
+      "description": "开心"
+    },
+    "sad": {
+      "speed": -0.15,
+      "pitch": -0.6,
+      "vol": -0.15,
+      "pass_to_provider": true,
+      "description": "难过"
+    },
+    "angry": {
+      "speed": 0.15,
+      "pitch": 0.3,
+      "vol": 0.2,
+      "pass_to_provider": true,
+      "description": "生气"
+    },
+    "fearful": {
+      "speed": 0.1,
+      "pitch": 0.5,
+      "vol": 0.05,
+      "pass_to_provider": true,
+      "description": "害怕"
+    },
+    "surprised": {
+      "speed": 0.05,
+      "pitch": 0.4,
+      "vol": 0.15,
+      "pass_to_provider": true,
+      "description": "惊讶"
+    },
+    "tender": {
+      "speed": -0.08,
+      "pitch": -0.3,
+      "vol": -0.08,
+      "pass_to_provider": false,
+      "description": "温柔"
+    },
+    "sexy": {
+      "speed": -0.18,
+      "pitch": -0.7,
+      "vol": 0.1,
+      "pass_to_provider": false,
+      "description": "性感"
+    },
+    "neutral": {
+      "speed": 0,
+      "pitch": 0,
+      "vol": 0,
+      "pass_to_provider": false,
+      "description": "中性"
+    }
+  }
+}
