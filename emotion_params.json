@@ -7,23 +7,23 @@
   "strength": 0.7,
   "emotions": {
     "happy": {
-      "speed": 0.12,
-      "pitch": 0.5,
-      "vol": 0.15,
+      "speed": 0.08,
+      "pitch": 0.3,
+      "vol": 0.1,
       "pass_to_provider": true,
       "description": "开心"
     },
     "sad": {
-      "speed": -0.15,
-      "pitch": -0.6,
-      "vol": -0.15,
+      "speed": -0.1,
+      "pitch": -0.4,
+      "vol": -0.1,
       "pass_to_provider": true,
       "description": "难过"
     },
     "angry": {
-      "speed": 0.15,
-      "pitch": 0.3,
-      "vol": 0.2,
+      "speed": 0.12,
+      "pitch": 0.2,
+      "vol": 0.15,
       "pass_to_provider": true,
       "description": "生气"
     },
@@ -42,16 +42,16 @@
       "description": "惊讶"
     },
     "tender": {
-      "speed": -0.08,
-      "pitch": -0.3,
-      "vol": -0.08,
+      "speed": -0.05,
+      "pitch": -0.2,
+      "vol": -0.05,
       "pass_to_provider": false,
       "description": "温柔"
     },
     "sexy": {
-      "speed": -0.18,
-      "pitch": -0.7,
-      "vol": 0.1,
+      "speed": -0.15,
+      "pitch": -0.5,
+      "vol": 0.08,
       "pass_to_provider": false,
       "description": "性感"
     },
