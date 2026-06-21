@@ -10,5 +10,152 @@
     "type": "bool",
     "default": false,
     "hint": "若开启，当TTS生成失败时，将在回复中包含错误提示"
+  },
+  "baseline_speed": {
+    "description": "基准语速",
+    "type": "float",
+    "hint": "所有情绪的基础语速，范围 0.5-2.0，默认 1.0 为正常速度。最终语速 = 基准语速 + (情绪语速偏移 × 情绪强度)",
+    "default": 1.0
+  },
+  "baseline_pitch": {
+    "description": "基准音调",
+    "type": "float",
+    "hint": "所有情绪的基础音调，范围 -12.0 到 12.0，0 为原始音调，正值升高，负值降低。最终音调 = 基准音调 + (情绪音调偏移 × 情绪强度)",
+    "default": 0.0
+  },
+  "baseline_vol": {
+    "description": "基准音量",
+    "type": "float",
+    "hint": "所有情绪的基础音量，范围 0.1-2.0，默认 1.0 为正常音量。最终音量 = 基准音量 + (情绪音量偏移 × 情绪强度)",
+    "default": 1.0
+  },
+  "emotion_strength": {
+    "description": "情绪强度系数",
+    "type": "float",
+    "hint": "范围 0.0-1.0，控制情绪参数偏移的影响强度。0 = 无效果，1 = 完全应用。推荐 0.7",
+    "default": 0.7
+  },
+  "emotion_params": {
+    "description": "情绪参数列表（点 + 号添加，垃圾桶删除）",
+    "type": "template_list",
+    "hint": "每个块定义一个情绪的语音参数偏移量。填写说明见README。",
+    "templates": {
+      "emotion": {
+        "name": "情绪参数配置",
+        "hint": "定义一个情绪的语音参数偏移量。在下方填写情绪名和显示名后，该配置块会应用到对应情绪",
+        "items": {
+          "emotion_name": {
+            "description": "情绪名（英文）",
+            "type": "string",
+            "hint": "全小写英文，LLM 调用时使用。例：happy, sad, tender, excited",
+            "default": ""
+          },
+          "display_name": {
+            "description": "显示名（中文）",
+            "type": "string",
+            "hint": "方便识别的中文名称。例：开心、难过、温柔、兴奋",
+            "default": ""
+          },
+          "speed_offset": {
+            "description": "语速偏移",
+            "type": "float",
+            "hint": "相对基准语速的偏移量，范围 -1.5 到 1.5。正值加快，负值减慢",
+            "default": 0.0
+          },
+          "pitch_offset": {
+            "description": "音调偏移",
+            "type": "float",
+            "hint": "相对基准音调的偏移量，范围 -12.0 到 12.0。正值升高，负值降低",
+            "default": 0.0
+          },
+          "vol_offset": {
+            "description": "音量偏移",
+            "type": "float",
+            "hint": "相对基准音量的偏移量，范围 -1.9 到 1.9。正值增大，负值减小",
+            "default": 0.0
+          },
+          "pass_to_provider": {
+            "description": "传递给 Provider",
+            "type": "bool",
+            "hint": "是否将情绪名传递给 TTS Provider（如 ElevenLabs 支持原生情绪参数）",
+            "default": false
+          }
+        }
+      }
+    },
+    "default": [
+      {
+        "__template_key": "emotion",
+        "emotion_name": "happy",
+        "display_name": "开心",
+        "speed_offset": 0.08,
+        "pitch_offset": 0.3,
+        "vol_offset": 0.1,
+        "pass_to_provider": true
+      },
+      {
+        "__template_key": "emotion",
+        "emotion_name": "sad",
+        "display_name": "难过",
+        "speed_offset": -0.1,
+        "pitch_offset": -0.4,
+        "vol_offset": -0.1,
+        "pass_to_provider": true
+      },
+      {
+        "__template_key": "emotion",
+        "emotion_name": "angry",
+        "display_name": "生气",
+        "speed_offset": 0.12,
+        "pitch_offset": 0.2,
+        "vol_offset": 0.15,
+        "pass_to_provider": true
+      },
+      {
+        "__template_key": "emotion",
+        "emotion_name": "tender",
+        "display_name": "温柔",
+        "speed_offset": -0.05,
+        "pitch_offset": -0.2,
+        "vol_offset": -0.05,
+        "pass_to_provider": false
+      },
+      {
+        "__template_key": "emotion",
+        "emotion_name": "fearful",
+        "display_name": "害怕",
+        "speed_offset": 0.1,
+        "pitch_offset": 0.5,
+        "vol_offset": 0.05,
+        "pass_to_provider": true
+      },
+      {
+        "__template_key": "emotion",
+        "emotion_name": "surprised",
+        "display_name": "惊讶",
+        "speed_offset": 0.05,
+        "pitch_offset": 0.4,
+        "vol_offset": 0.15,
+        "pass_to_provider": true
+      },
+      {
+        "__template_key": "emotion",
+        "emotion_name": "neutral",
+        "display_name": "中性",
+        "speed_offset": 0.0,
+        "pitch_offset": 0.0,
+        "vol_offset": 0.0,
+        "pass_to_provider": false
+      },
+      {
+        "__template_key": "emotion",
+        "emotion_name": "sexy",
+        "display_name": "性感",
+        "speed_offset": -0.15,
+        "pitch_offset": -0.5,
+        "vol_offset": 0.08,
+        "pass_to_provider": false
+      }
+    ]
   }
 }

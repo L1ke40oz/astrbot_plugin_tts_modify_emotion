@@ -67,8 +67,55 @@ class TTSModifyPlugin(Star):
         self.emotion_config = None
 
     async def initialize(self):
-        """插件初始化：加载情绪参数配置。"""
+        """插件初始化：从配置生成 emotion_params.json，然后加载。"""
+        self._sync_config_to_emotion_params()
         self._load_emotion_config()
+
+    def _sync_config_to_emotion_params(self):
+        """从 self.config 读取配置并写入 emotion_params.json。"""
+        try:
+            # 读取配置界面中的参数
+            baseline_speed = self.config.get("baseline_speed", 1.0)
+            baseline_pitch = self.config.get("baseline_pitch", 0.0)
+            baseline_vol = self.config.get("baseline_vol", 1.0)
+            emotion_strength = self.config.get("emotion_strength", 0.7)
+            emotion_params_list = self.config.get("emotion_params", [])
+
+            # 构建 emotion_params.json 格式
+            emotion_config = {
+                "baseline": {
+                    "speed": baseline_speed,
+                    "pitch": baseline_pitch,
+                    "vol": baseline_vol,
+                },
+                "strength": emotion_strength,
+                "emotions": {}
+            }
+
+            # 转换 emotion_params 列表为字典格式
+            for emotion_item in emotion_params_list:
+                emotion_name = emotion_item.get("emotion_name", "").strip()
+                if not emotion_name:
+                    continue
+                
+                emotion_config["emotions"][emotion_name] = {
+                    "speed": emotion_item.get("speed_offset", 0.0),
+                    "pitch": emotion_item.get("pitch_offset", 0.0),
+                    "vol": emotion_item.get("vol_offset", 0.0),
+                    "pass_to_provider": emotion_item.get("pass_to_provider", False),
+                    "description": emotion_item.get("display_name", emotion_name),
+                }
+
+            # 写入 emotion_params.json
+            config_path = Path(__file__).parent / EMOTION_CONFIG_FILE
+            config_path.write_text(
+                json.dumps(emotion_config, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            logger.info(f"已从配置界面同步参数到 {config_path}")
+
+        except Exception as e:
+            logger.exception(f"同步配置到 emotion_params.json 失败: {e}")
 
     def _load_emotion_config(self):
         """加载情绪参数配置文件，失败时使用默认配置。"""
