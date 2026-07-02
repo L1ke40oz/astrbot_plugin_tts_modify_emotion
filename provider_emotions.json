@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "description": "TTS 服务商原生支持的情绪标签",
+  "emotions": {
+    "astonished": "震惊",
+    "frightened": "害怕",
+    "furious": "愤怒",
+    "hushed": "低声",
+    "joyful": "喜悦",
+    "peaceful": "平静",
+    "revolted": "厌恶",
+    "smooth": "流畅",
+    "sorrowful": "悲伤"
+  }
+}

@@ -25,6 +25,8 @@ LEADING_BOUNDARY_SEPARATOR_PATTERN = re.compile(
 
 # ─── 默认情绪参数配置（用户可在 emotion_params.json 中覆盖）───
 EMOTION_CONFIG_FILE = "emotion_params.json"
+PROVIDER_EMOTIONS_FILE = "provider_emotions.json"
+PROVIDER_INTERJECTIONS_FILE = "provider_interjections.json"
 DEFAULT_EMOTION_CONFIG = {
     "baseline": {"speed": 1.0, "pitch": 0, "vol": 1.0},
     "strength": 0.7,
@@ -65,11 +67,15 @@ class TTSModifyPlugin(Star):
         super().__init__(context, config)
         self.config = config or {}
         self.emotion_config = None
+        self.provider_emotions = {}
+        self.provider_interjections = {}
 
     async def initialize(self):
         """插件初始化：从配置生成 emotion_params.json，然后加载。"""
         self._sync_config_to_emotion_params()
         self._load_emotion_config()
+        self._load_provider_emotions()
+        self._load_provider_interjections()
 
     def _sync_config_to_emotion_params(self):
         """从 self.config 读取配置并写入 emotion_params.json。"""
@@ -140,6 +146,34 @@ class TTSModifyPlugin(Star):
 
         logger.info(f"可用情绪列表: {self._format_available_emotions()}")
 
+    def _load_provider_emotions(self):
+        """加载服务商支持的官方情绪标签。"""
+        config_path = Path(__file__).parent / PROVIDER_EMOTIONS_FILE
+        try:
+            if config_path.exists():
+                content = config_path.read_text(encoding="utf-8")
+                loaded = json.loads(content)
+                self.provider_emotions = loaded.get("emotions", {})
+                logger.info(f"已加载官方情绪标签: {list(self.provider_emotions.keys())}")
+            else:
+                logger.warning(f"未找到官方情绪标签文件: {config_path}")
+        except Exception as e:
+            logger.exception(f"加载官方情绪标签失败: {e}")
+
+    def _load_provider_interjections(self):
+        """加载服务商支持的语气词标签。"""
+        config_path = Path(__file__).parent / PROVIDER_INTERJECTIONS_FILE
+        try:
+            if config_path.exists():
+                content = config_path.read_text(encoding="utf-8")
+                loaded = json.loads(content)
+                self.provider_interjections = loaded.get("interjections", {})
+                logger.info(f"已加载语气词标签: {list(self.provider_interjections.keys())}")
+            else:
+                logger.warning(f"未找到语气词标签文件: {config_path}")
+        except Exception as e:
+            logger.exception(f"加载语气词标签失败: {e}")
+
     @staticmethod
     def _validate_emotion_config(config: dict) -> dict:
         """校验并修正情绪配置参数，确保在安全范围内。"""
@@ -171,18 +205,42 @@ class TTSModifyPlugin(Star):
         return validated
 
     def _format_available_emotions(self) -> str:
-        """从 emotion_params.json 加载结果中动态生成可用情绪列表。"""
+        """从 emotion_params.json 和 provider_emotions.json 加载结果中动态生成可用情绪列表。"""
         try:
-            emotions = self.emotion_config.get("emotions", {}) if self.emotion_config else {}
-            if not emotions:
+            custom_emotions = self.emotion_config.get("emotions", {}) if self.emotion_config else {}
+            provider_emotions = self.provider_emotions
+            
+            all_emotions = set(custom_emotions.keys()) | set(provider_emotions.keys())
+            
+            if not all_emotions:
                 return "（暂无）"
-            return "、".join(emotions.keys())
+            return "、".join(sorted(all_emotions))
         except Exception as e:
             logger.exception(f"格式化可用情绪列表失败: {e}")
             return "（暂无）"
 
     def _calculate_emotion_params(self, emotion: str) -> dict | None:
-        """根据情绪标签计算微调后的 voice_setting 参数。"""
+        """根据情绪标签计算微调后的 voice_setting 参数。
+        
+        优先级：
+        1. 如果标签存在于 provider_emotions.json（官方支持），直接传递给服务商，不做参数微调
+        2. 如果标签存在于 emotion_params.json（自定义），根据 pass_to_provider 决定：
+           - pass_to_provider=true: 传递标签 + 参数微调
+           - pass_to_provider=false: 仅参数微调，不传递标签
+        3. 如果标签不存在，返回 None 使用默认参数
+        """
+        # 检查是否为官方支持的情绪标签
+        if emotion in self.provider_emotions:
+            logger.info(f"使用官方情绪标签: {emotion} ({self.provider_emotions[emotion]})")
+            return {
+                "speed": None,  # 不做参数微调
+                "pitch": None,
+                "vol": None,
+                "pass_to_provider": True,  # 直接传递给服务商
+                "is_provider_native": True,  # 标记为官方原生支持
+            }
+        
+        # 检查自定义情绪配置
         if not self.emotion_config:
             return None
         
@@ -213,6 +271,7 @@ class TTSModifyPlugin(Star):
             "pitch": round(pitch, 1),
             "vol": round(vol, 2),
             "pass_to_provider": adj.get("pass_to_provider", False),
+            "is_provider_native": False,  # 标记为自定义模拟
         }
 
     @staticmethod
@@ -432,8 +491,11 @@ class TTSModifyPlugin(Star):
         tts_prompt = self.config.get(self.CONFIG_KEY_TTS_PROMPT, "")
         if tts_prompt:
             available_emotions = self._format_available_emotions()
-            request.system_prompt += "\n" + tts_prompt.format(available_emotions=available_emotions)
-
+            available_interjections = "、".join(self.provider_interjections.keys()) if self.provider_interjections else "（暂无）"
+            request.system_prompt += "\n" + tts_prompt.format(
+                available_emotions=available_emotions,
+                available_interjections=available_interjections
+            )
     # ─── Hook: 结果装饰——处理 TTS 标签 ───
 
     @on_decorating_result(priority=13)
@@ -560,29 +622,39 @@ class TTSModifyPlugin(Star):
         self, tts_content: str, tts_provider, use_file_service: bool,
         emotion: str | None = None,
     ) -> Record | None:
-        """调用 TTS 生成音频。如果有情绪标签则临时微调语音参数。"""
+        """调用 TTS 生成音频。如果有情绪标签则临时微调语音参数或直接传递给服务商。"""
         original_voice_setting = None
         try:
-            # 有情绪标签且 provider 支持 voice_setting 时微调参数
+            # 有情绪标签且 provider 支持 voice_setting 时处理情绪
             if emotion and hasattr(tts_provider, "voice_setting"):
                 emotion_params = self._calculate_emotion_params(emotion)
                 if emotion_params:
                     original_voice_setting = copy.deepcopy(tts_provider.voice_setting)
-                    tts_provider.voice_setting["speed"] = emotion_params["speed"]
-                    tts_provider.voice_setting["pitch"] = emotion_params["pitch"]
-                    tts_provider.voice_setting["vol"] = emotion_params["vol"]
                     
-                    # 根据配置决定是否向 Provider 传递 emotion 字段
-                    if emotion_params.get("pass_to_provider", False):
+                    # 判断是官方原生支持还是自定义模拟
+                    is_provider_native = emotion_params.get("is_provider_native", False)
+                    
+                    if is_provider_native:
+                        # 官方原生支持：直接传递 emotion 字段，不做参数微调
                         tts_provider.voice_setting["emotion"] = emotion
-                    
-                    logger.info(
-                        f"TTS 情绪微调: '{emotion}' → "
-                        f"speed={emotion_params['speed']}, "
-                        f"pitch={emotion_params['pitch']}, "
-                        f"vol={emotion_params['vol']}, "
-                        f"pass_to_provider={emotion_params.get('pass_to_provider', False)}"
-                    )
+                        logger.info(f"TTS 使用官方原生情绪: '{emotion}'")
+                    else:
+                        # 自定义模拟：微调参数
+                        tts_provider.voice_setting["speed"] = emotion_params["speed"]
+                        tts_provider.voice_setting["pitch"] = emotion_params["pitch"]
+                        tts_provider.voice_setting["vol"] = emotion_params["vol"]
+                        
+                        # 根据配置决定是否向 Provider 传递 emotion 字段
+                        if emotion_params.get("pass_to_provider", False):
+                            tts_provider.voice_setting["emotion"] = emotion
+                        
+                        logger.info(
+                            f"TTS 情绪微调: '{emotion}' → "
+                            f"speed={emotion_params['speed']}, "
+                            f"pitch={emotion_params['pitch']}, "
+                            f"vol={emotion_params['vol']}, "
+                            f"pass_to_provider={emotion_params.get('pass_to_provider', False)}"
+                        )
 
             audio_path = await tts_provider.get_audio(tts_content)
             if not audio_path:

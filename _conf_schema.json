@@ -2,8 +2,8 @@
   "tts_prompt": {
     "description": "TTS触发提示词",
     "type": "text",
-    "hint": "在此修改TTS触发提示词，可使用 {available_emotions} 占位符动态注入可用情绪列表。若使用的分段正则为标点符号(，。？！等)，且需要转语音的文本中带有这些符号，可能会导致识别/转换失败",
-    "default": "当你想要发送语音时，使用<tts:emotion></tts>标签包裹需要转语音的文本，语音可放在句中的任意位置。你可以根据当前情绪选择合适的情绪标签，让语音更有表现力。\n可选的emotion列表：{available_emotions}\n示例一：对猫来说想念是很平常的事<tts:tender>人类只有分开的时候才会想念</tts> \n示例二：<tts:happy>谢谢你的祝福</tts>"
+    "hint": "在此修改TTS触发提示词，可使用 {available_emotions} 和 {available_interjections} 占位符动态注入可用情绪列表和语气词列表。若使用的分段正则为标点符号(，。？！等)，且需要转语音的文本中带有这些符号，可能会导致识别/转换失败",
+    "default": "当你确实想要发送语音时，使用<tts:emotion></tts>标签包裹需要转语音的文本，语音可放在句中的任意位置。你可以根据当前情绪选择合适的情绪标签，让语音更有表现力。\n\n【情绪标签】使用格式 <tts:emotion>文本</tts>\n可选的emotion列表：{available_emotions}\n\n【语气词标签】直接插入到 <tts> 标签内文本中\n可用语气词：{available_interjections}\n示例：<tts:joyful>你好(giggle)，(breathe-out)很高兴认识你</tts>\n\n示例一：对猫来说想念是很平常的事<tts:tender>人类只有分开的时候才会想念</tts> \n示例二：<tts:happy>谢谢你的祝福(mm-hmm)</tts>"
   },
   "notify_on_failure": {
     "description": "TTS失败时通知",

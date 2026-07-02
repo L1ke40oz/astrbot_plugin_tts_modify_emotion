@@ -35,10 +35,10 @@
       "description": "温柔"
     },
     "fearful": {
-      "speed": -0.15,
-      "pitch": -0.7,
-      "vol": 0.09,
-      "pass_to_provider": false,
+      "speed": 0.1,
+      "pitch": 0.5,
+      "vol": 0.05,
+      "pass_to_provider": true,
       "description": "害怕"
     },
     "surprised": {

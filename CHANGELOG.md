@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## v1.6.0
+
+### 新增
+* 新增 `provider_emotions.json` - 存储 TTS 服务商原生支持的情绪标签
+* 新增 `provider_interjections.json` - 存储 TTS 服务商支持的语气词标签
+* 支持官方原生情绪标签（astonished, frightened, furious, hushed, joyful, peaceful, revolted, smooth, sorrowful）
+* 支持语气词标签（(giggle), (sigh), (breathe-in), (breathe-out), (hum) 等19种）
+
+### 修改
+* 优化情绪处理逻辑：优先使用官方原生情绪标签（直接传递给服务商，不做参数微调）
+* 更新提示词：新增 `{available_interjections}` 占位符，动态注入语气词列表
+* 情绪标签优先级：官方原生 > 自定义（根据 pass_to_provider 决定是否传递）
+* 可用情绪列表现在同时显示自定义和官方支持的情绪
+
+### 原因
+* 提升语音表现力：官方原生情绪标签效果更自然
+* 支持语气词标签：增加笑声、叹气、呼吸等声音效果
+* 保持向后兼容：自定义情绪配置继续生效，不影响现有用户
+
 ## v1.5.0
 
 ### 新增

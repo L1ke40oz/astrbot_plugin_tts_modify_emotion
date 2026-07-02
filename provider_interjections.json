@@ -1,0 +1,25 @@
+{
+  "version": "1.0.0",
+  "description": "TTS 服务商支持的语气词标签，插入到 <tts> 标签内部文本中即可",
+  "interjections": {
+    "(achoo)": "打喷嚏",
+    "(ahem)": "清嗓子",
+    "(belch)": "打嗝",
+    "(breathe-in)": "吸气",
+    "(breathe-out)": "呼气",
+    "(breathing)": "呼吸声",
+    "(exhale-weary)": "疲惫地呼气",
+    "(giggle)": "咯咯笑",
+    "(guffaw)": "大笑",
+    "(gulp)": "吞咽",
+    "(hack)": "咳嗽",
+    "(hiss)": "嘶嘶声",
+    "(hum)": "哼唱",
+    "(mm-hmm)": "嗯哼",
+    "(moan)": "呻吟",
+    "(panting)": "喘气",
+    "(smack)": "咂嘴",
+    "(sniffle)": "抽鼻子",
+    "(snort)": "哼鼻子"
+  }
+}
